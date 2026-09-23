@@ -196,7 +196,8 @@ td { font-size: 14px; }
 .movie-row--unavailable > td:not(.actions) {
   color: #666d79;
 }
-.movie-row--unavailable .tag-badge {
+.movie-row--unavailable .tag-badge,
+.movie-row--unavailable .actor-badge {
   opacity: 0.5;
 }
 
@@ -208,7 +209,8 @@ td { font-size: 14px; }
 }
 
 
-.tag-filter-panel {
+.tag-filter-panel,
+.actor-filter-panel {
   display: grid;
   gap: 10px;
   justify-items: center;
@@ -219,7 +221,8 @@ td { font-size: 14px; }
 }
 
 .excluded-tag-filters,
-.included-tag-filter {
+.included-tag-filter,
+.selected-actor-filters {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -227,26 +230,32 @@ td { font-size: 14px; }
   gap: 8px;
 }
 
-.tag-filter-label {
+.tag-filter-label,
+.actor-filter-label {
   color: #8f96a4;
   font-size: 12px;
   font-weight: 600;
 }
 
 .tag-filter-list,
-.movie-tags {
+.movie-tags,
+.actor-filter-list,
+.movie-actors {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.tag-filter-list--available {
+.tag-filter-list--available,
+.actor-filter-list--available {
   justify-content: center;
 }
 
 .tag-filter-button,
-.tag-badge {
+.tag-badge,
+.actor-filter-button,
+.actor-badge {
   border: 1px solid #3c4655;
   border-radius: 4px;
   background: #20252d;
@@ -257,13 +266,15 @@ td { font-size: 14px; }
   white-space: nowrap;
 }
 
-.tag-filter-button {
+.tag-filter-button,
+.actor-filter-button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
-.tag-filter-button:hover {
+.tag-filter-button:hover,
+.actor-filter-button:hover {
   border-color: #697587;
   background: #2a303a;
 }
@@ -285,15 +296,29 @@ td { font-size: 14px; }
   border-color: #cfd3db;
 }
 
-.tag-filter-hint {
+.actor-filter-button--selected {
+  border-color: #9aa8ba;
+  background: #e7e9ee;
+  color: #111318;
+}
+
+.actor-filter-button--selected:hover {
+  background: #cfd3db;
+  border-color: #cfd3db;
+}
+
+.tag-filter-hint,
+.actor-filter-hint {
   font-size: 11px;
 }
 
-.tag-badge {
+.tag-badge,
+.actor-badge {
   cursor: default;
 }
 
-.tag-filter-empty {
+.tag-filter-empty,
+.actor-filter-empty {
   font-size: 12px;
 }
 
@@ -308,7 +333,7 @@ td { font-size: 14px; }
   background: rgba(0, 0, 0, 0.62);
 }
 
-.tag-editor {
+.dialog {
   width: min(620px, 100%);
   max-height: min(720px, calc(100vh - 48px));
   overflow: auto;
@@ -319,39 +344,43 @@ td { font-size: 14px; }
   padding: 20px;
 }
 
-.tag-editor-header,
-.tag-editor-footer,
-.tag-editor-actions,
-.tag-create-form {
+.dialog-header,
+.dialog-footer,
+.dialog-actions,
+.tag-create-form,
+.actor-create-form {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.tag-editor-header,
-.tag-editor-footer {
+.dialog-header,
+.dialog-footer {
   justify-content: space-between;
 }
 
-.tag-editor-header h2 {
+.dialog-header h2 {
   margin-bottom: 4px;
 }
 
-.tag-editor-header p {
+.dialog-header p {
   margin-bottom: 0;
   color: #9198a7;
 }
 
-.tag-create-form {
+.tag-create-form,
+.actor-create-form {
   margin: 20px 0;
 }
 
-.tag-create-form input {
+.tag-create-form input,
+.actor-create-form input {
   flex: 1;
   min-width: 0;
 }
 
-.tag-editor-list {
+.tag-editor-list,
+.actor-editor-list {
   min-height: 96px;
   display: flex;
   align-content: flex-start;
@@ -363,7 +392,8 @@ td { font-size: 14px; }
   background: #14171d;
 }
 
-.tag-editor-tag {
+.tag-editor-tag,
+.actor-editor-actor {
   border-radius: 4px;
   padding: 6px 10px;
   color: #cbd1db;
@@ -371,43 +401,48 @@ td { font-size: 14px; }
   border-color: #3c4655;
 }
 
-.tag-editor-tag:hover {
+.tag-editor-tag:hover,
+.actor-editor-actor:hover {
   border-color: #697587;
   background: #2a303a;
 }
 
-.tag-editor-tag--selected {
+.tag-editor-tag--selected,
+.actor-editor-actor--selected {
   color: #111318;
   background: #e7e9ee;
   border-color: #e7e9ee;
 }
 
-.tag-editor-tag--selected:hover {
+.tag-editor-tag--selected:hover,
+.actor-editor-actor--selected:hover {
   background: #cfd3db;
   border-color: #cfd3db;
 }
 
-.tag-editor-footer {
+.dialog-footer {
   margin-top: 20px;
 }
 
 @media (max-width: 620px) {
-  .tag-editor-header,
-  .tag-editor-footer,
-  .tag-create-form {
+  .dialog-header,
+  .dialog-footer,
+  .tag-create-form,
+  .actor-create-form {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .tag-editor-actions {
+  .dialog-actions {
     width: 100%;
   }
 
-  .tag-editor-actions button {
+  .dialog-actions button {
     flex: 1;
   }
 }
 
-.tag-editor-error {
+.tag-editor-error,
+.actor-editor-error {
   margin-bottom: 14px;
 }

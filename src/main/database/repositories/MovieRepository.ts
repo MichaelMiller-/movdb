@@ -2,6 +2,7 @@ import { stat } from 'node:fs/promises'
 import { basename } from 'node:path'
 import { In, type DataSource, type Repository } from 'typeorm'
 import type { MovieCreateInput, MovieSummary } from '../../../shared/movies'
+import { Actor } from '../entities/Actor'
 import { Movie } from '../entities/Movie'
 import { Publisher } from '../entities/Publisher'
 import { Tag } from '../entities/Tag'
@@ -10,16 +11,18 @@ export class MovieRepository {
   private readonly movies: Repository<Movie>
   private readonly publishers: Repository<Publisher>
   private readonly tags: Repository<Tag>
+  private readonly actors: Repository<Actor>
 
   constructor(dataSource: DataSource) {
     this.movies = dataSource.getRepository(Movie)
     this.publishers = dataSource.getRepository(Publisher)
     this.tags = dataSource.getRepository(Tag)
+    this.actors = dataSource.getRepository(Actor)
   }
 
   async list(): Promise<MovieSummary[]> {
     const movies = await this.movies.find({
-      relations: { publisher: true, tags: true },
+      relations: { publisher: true, tags: true, actors: true },
       order: { title: 'ASC' }
     })
 
@@ -60,7 +63,7 @@ export class MovieRepository {
   async updateTags(id: number, tagIds: number[]): Promise<MovieSummary> {
     const movie = await this.movies.findOne({
       where: { id },
-      relations: { publisher: true, tags: true }
+      relations: { publisher: true, tags: true, actors: true }
     })
 
     if (!movie) throw new Error('Movie not found.')
@@ -78,10 +81,31 @@ export class MovieRepository {
     return toMovieSummary(await this.movies.save(movie))
   }
 
+  async updateActors(id: number, actorIds: number[]): Promise<MovieSummary> {
+    const movie = await this.movies.findOne({
+      where: { id },
+      relations: { publisher: true, tags: true, actors: true }
+    })
+
+    if (!movie) throw new Error('Movie not found.')
+
+    const uniqueActorIds = [...new Set(actorIds)]
+    const actors = uniqueActorIds.length > 0
+      ? await this.actors.findBy({ id: In(uniqueActorIds) })
+      : []
+
+    if (actors.length !== uniqueActorIds.length) {
+      throw new Error('One or more selected actors do not exist.')
+    }
+
+    movie.actors = actors
+    return toMovieSummary(await this.movies.save(movie))
+  }
+
   async findById(id: number): Promise<MovieSummary | null> {
     const movie = await this.movies.findOne({
       where: { id },
-      relations: { publisher: true, tags: true }
+      relations: { publisher: true, tags: true, actors: true }
     })
 
     return movie ? toMovieSummary(movie) : null
@@ -104,6 +128,9 @@ async function toMovieSummary(movie: Movie): Promise<MovieSummary> {
     available: await isRegularFile(movie.filepath),
     tags: (movie.tags ?? [])
       .map((tag) => ({ id: tag.id, name: tag.name }))
+      .sort((left, right) => left.name.localeCompare(right.name)),
+    actors: (movie.actors ?? [])
+      .map((actor) => ({ id: actor.id, name: actor.name }))
       .sort((left, right) => left.name.localeCompare(right.name)),
     createdAt: movie.createdAt.toISOString()
   }

@@ -3,6 +3,11 @@ export interface TagSummary {
   name: string
 }
 
+export interface ActorSummary {
+  id: number
+  name: string
+}
+
 export interface MovieSummary {
   id: number
   title: string
@@ -13,6 +18,7 @@ export interface MovieSummary {
   durationSeconds: number | null
   available: boolean
   tags: TagSummary[]
+  actors: ActorSummary[]
   createdAt: string
 }
 
@@ -49,6 +55,9 @@ export interface MovieLibraryApi {
   listTags(): Promise<TagSummary[]>
   createTag(name: string): Promise<TagSummary>
   updateMovieTags(id: number, tagIds: number[]): Promise<MovieSummary>
+  listActors(): Promise<ActorSummary[]>
+  createActor(name: string): Promise<ActorSummary>
+  updateMovieActors(id: number, actorIds: number[]): Promise<MovieSummary>
   pickMovieFile(): Promise<PickedMovieFile | null>
   importDroppedFiles(files: readonly unknown[]): Promise<MovieImportResult>
 }
@@ -60,8 +69,11 @@ export const IPC_CHANNELS = {
   moviesPlay: 'movies:play',
   moviesPlayList: 'movies:play-list',
   moviesUpdateTags: 'movies:update-tags',
+  moviesUpdateActors: 'movies:update-actors',
   tagsList: 'tags:list',
   tagsCreate: 'tags:create',
+  actorsList: 'actors:list',
+  actorsCreate: 'actors:create',
   moviesPickFile: 'movies:pick-file',
   moviesImportFiles: 'movies:import-files'
 } as const

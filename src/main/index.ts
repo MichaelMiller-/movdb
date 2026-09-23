@@ -8,8 +8,8 @@ import { registerIpcHandlers } from './ipc'
 
 async function createWindow(): Promise<void> {
   const mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 800,
+    width: 1920,
+    height: 1200,
     minWidth: 900,
     minHeight: 600,
     show: false,
@@ -23,6 +23,9 @@ async function createWindow(): Promise<void> {
 
   mainWindow.once('ready-to-show', () => mainWindow.show())
 
+  if (!app.isPackaged) {
+    mainWindow.webContents.openDevTools()
+  }
   if (!app.isPackaged && process.env.ELECTRON_RENDERER_URL) {
     await mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL)
   } else {

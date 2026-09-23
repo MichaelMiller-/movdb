@@ -1,4 +1,4 @@
-import { stat, writeFile } from 'node:fs/promises'
+import { readdir,stat, writeFile } from 'node:fs/promises'
 import { basename, extname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { app, dialog, ipcMain, shell } from 'electron'
@@ -9,6 +9,7 @@ import {
   type MovieImportResult,
   type PickedMovieFile
 } from '../shared/movies'
+import { ActorRepository } from './database/repositories/ActorRepository'
 import { MovieRepository } from './database/repositories/MovieRepository'
 import { TagRepository } from './database/repositories/TagRepository'
 
@@ -17,6 +18,7 @@ const VIDEO_EXTENSIONS = new Set(['.mkv', '.mp4', '.avi', '.webm', '.mov', '.m4v
 export function registerIpcHandlers(dataSource: DataSource): void {
   const movies = new MovieRepository(dataSource)
   const tags = new TagRepository(dataSource)
+  const actors = new ActorRepository(dataSource)
 
   ipcMain.handle(IPC_CHANNELS.moviesList, () => movies.list())
 
@@ -48,6 +50,28 @@ export function registerIpcHandlers(dataSource: DataSource): void {
     }
 
     return tags.create(name)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.moviesUpdateActors, (_event, id: number, actorIds: unknown) => {
+    if (!Number.isInteger(id) || id <= 0) {
+      throw new Error('Invalid movie id.')
+    }
+
+    if (!Array.isArray(actorIds) || !actorIds.every((actorId) => Number.isInteger(actorId) && actorId > 0)) {
+      throw new Error('Invalid actor selection.')
+    }
+
+    return movies.updateActors(id, actorIds as number[])
+  })
+
+  ipcMain.handle(IPC_CHANNELS.actorsList, () => actors.list())
+
+  ipcMain.handle(IPC_CHANNELS.actorsCreate, (_event, name: unknown) => {
+    if (typeof name !== 'string') {
+      throw new Error('Invalid actor name.')
+    }
+
+    return actors.create(name)
   })
 
   ipcMain.handle(IPC_CHANNELS.moviesPlay, async (_event, id: number) => {
@@ -128,49 +152,80 @@ export function registerIpcHandlers(dataSource: DataSource): void {
         throw new Error('Invalid dropped file list.')
       }
 
-      const filePaths = [
+      console.log('IPC_CHANNELS.moviesImportFiles')
+
+      const droppedPaths = [
         ...new Set(input.filter((value): value is string => typeof value === 'string' && value.length > 0))
       ]
+
+      console.log(droppedPaths.length)
+      console.log(droppedPaths)
 
       const result: MovieImportResult = {
         added: [],
         skipped: []
       }
 
-      for (const filepath of filePaths) {
-        const filename = basename(filepath)
-        const extension = extname(filename).toLowerCase()
+      await collectDroppedMovieFiles(droppedPaths, result);
+      return result
+    }
+  )
 
-        if (!VIDEO_EXTENSIONS.has(extension)) {
-          result.skipped.push({ filename, reason: 'Unsupported video format.' })
+  async function collectDroppedMovieFiles(
+      droppedPaths: readonly string[],
+      result: MovieImportResult
+  ): Promise<string[]> {
+    const movieFiles = new Set<string>()
+
+    for (const filepath of droppedPaths) {
+      await collectDroppedPath(filepath, movieFiles, result, true)
+    }
+
+    return [...movieFiles]
+  }
+
+  async function collectDroppedPath(
+      filepath: string,
+      movieFiles: Set<string>,
+      result: MovieImportResult,
+      reportUnsupportedFile: boolean
+  ): Promise<void> {
+    const filename = basename(filepath)
+
+    try {
+      const entries = await readdir(filepath, { withFileTypes: true })
+      entries.sort((left, right) => left.name.localeCompare(right.name))
+
+      for (const entry of entries) {
+        const entryPath = join(filepath, entry.name)
+
+        if (entry.isDirectory()) {
+          await collectDroppedPath(entryPath, movieFiles, result, false)
           continue
         }
 
-        try {
-          const fileStat = await stat(filepath)
-          if (!fileStat.isFile()) {
-            result.skipped.push({ filename, reason: 'Not a regular file.' })
-            continue
-          }
-
-          const picked = toPickedMovieFile(filepath)
+        if (entry.isFile() && isVideoFile(entry.name)) {
+          movieFiles.add(entryPath)
+          const picked = toPickedMovieFile(entry.name)
           const movie = await movies.create({
             title: picked.suggestedTitle,
             filepath: picked.filepath
           })
-
           result.added.push(movie)
-        } catch (error) {
-          result.skipped.push({
-            filename,
-            reason: error instanceof Error ? error.message : String(error)
-          })
         }
       }
-
-      return result
+    } catch (error) {
+      result.skipped.push({
+        filename,
+        reason: error instanceof Error ? error.message : String(error)
+      })
     }
-  )
+  }
+
+}
+
+function isVideoFile(filepath: string): boolean {
+  return VIDEO_EXTENSIONS.has(extname(filepath).toLowerCase())
 }
 
 function toPickedMovieFile(filepath: string): PickedMovieFile {
