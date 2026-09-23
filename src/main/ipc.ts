@@ -152,14 +152,9 @@ export function registerIpcHandlers(dataSource: DataSource): void {
         throw new Error('Invalid dropped file list.')
       }
 
-      console.log('IPC_CHANNELS.moviesImportFiles')
-
       const droppedPaths = [
         ...new Set(input.filter((value): value is string => typeof value === 'string' && value.length > 0))
       ]
-
-      console.log(droppedPaths.length)
-      console.log(droppedPaths)
 
       const result: MovieImportResult = {
         added: [],

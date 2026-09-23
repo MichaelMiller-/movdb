@@ -7,7 +7,7 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; min-height: 100vh; }
-button, input { font: inherit; }
+button, input, select { font: inherit; }
 button { cursor: pointer; }
 
 .app-shell {
@@ -60,7 +60,7 @@ h2 { margin-bottom: 16px; font-size: 18px; }
 .file-field { grid-column: 1 / -2; }
 .file-row input { flex: 1; }
 
-input, button {
+input, button, select {
   border: 1px solid #363d49;
   border-radius: 8px;
   color: #e7e9ee;
@@ -68,7 +68,8 @@ input, button {
   padding: 9px 11px;
 }
 
-input:focus {
+input:focus,
+select:focus {
   outline: 2px solid #637083;
   outline-offset: 1px;
 }
@@ -88,6 +89,23 @@ button.primary:hover { background: #cfd3db; }
 
 .library-panel { min-height: 260px; }
 .section-header h2 { margin-bottom: 0; }
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+}
+.pagination-controls,
+.pagination-page-size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pagination-controls { flex-wrap: wrap; justify-content: flex-end; }
+.pagination-page-size { color: #9198a7; font-size: 13px; }
+.pagination-page-size select { padding: 7px 9px; }
+
 .table-wrap { overflow: auto; }
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 11px 10px; border-bottom: 1px solid #2b303a; }
@@ -99,6 +117,8 @@ td { font-size: 14px; }
 @media (max-width: 850px) {
   .movie-form { grid-template-columns: 1fr 1fr; }
   .file-field { grid-column: 1 / -1; }
+  .pagination { align-items: flex-start; flex-direction: column; }
+  .pagination-controls { justify-content: flex-start; }
 }
 
 .drop-zone {

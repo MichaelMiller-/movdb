@@ -1,18 +1,7 @@
 import {
-    DragEvent,
     FormEvent,
-    useCallback,
     useEffect,
-    useMemo,
-    useState
 } from 'react'
-import type {
-    ActorSummary,
-    MovieCreateInput,
-    MovieImportResult,
-    MovieSummary,
-    TagSummary
-} from '@shared/movies'
 import {IconButton} from "@renderer/components/IconButton";
 import {TrashIcon} from "@renderer/components/icons/TrashIcon";
 import {PlayIcon} from "@renderer/components/icons/PlayIcon";
@@ -20,140 +9,146 @@ import {TagIcon} from "@renderer/components/icons/TagIcon";
 import {Panel} from "@renderer/components/Panel";
 import {ActorIcon} from "@renderer/components/icons/ActorIcon";
 import {Dialog, DialogActions, DialogFooter, DialogHeader} from "@renderer/components/Dialog";
-
-const emptyForm: MovieCreateInput = {
-    title: '',
-    filepath: '',
-    releaseDate: '',
-    publisherName: ''
-}
+import {
+    MOVIES_PER_PAGE_OPTIONS,
+    selectAvailableActors,
+    selectAvailableTags,
+    selectExcludedTags,
+    selectIncludedTag, selectPaginatedMovies,
+    selectPlayableVisibleMovies,
+    selectSelectedActors, selectTotalPages,
+    selectVisibleMovies,
+    useMovieLibraryStore,
+} from './stores/movieLibraryStore'
+import {useShallow} from "zustand/react/shallow";
+import {SelectionCount} from "@renderer/components/SelectionCount";
+import {TableHeader} from "@renderer/components/TableHeader";
+import {MovieTable} from "@renderer/components/MovieTable";
+import {TableColumn} from "@renderer/components/TableColumn";
 
 export default function App(): React.JSX.Element {
-    const [movies, setMovies] = useState<MovieSummary[]>([])
-    const [excludedTagIds, setExcludedTagIds] = useState<number[]>([])
-    const [includedTagId, setIncludedTagId] = useState<number | null>(null)
-    const [selectedActorIds, setSelectedActorIds] = useState<number[]>([])
-    const [form, setForm] = useState<MovieCreateInput>(emptyForm)
-    const [loading, setLoading] = useState(true)
-    const [importing, setImporting] = useState(false)
-    const [dragging, setDragging] = useState(false)
-    const [importResult, setImportResult] = useState<MovieImportResult | null>(null)
-    const [error, setError] = useState<string | null>(null)
-    const [tagEditorMovie, setTagEditorMovie] = useState<MovieSummary | null>(null)
-    const [allTags, setAllTags] = useState<TagSummary[]>([])
-    const [editedTagIds, setEditedTagIds] = useState<number[]>([])
-    const [newTagName, setNewTagName] = useState('')
-    const [loadingTags, setLoadingTags] = useState(false)
-    const [savingTags, setSavingTags] = useState(false)
-    const [creatingTag, setCreatingTag] = useState(false)
-    const [tagEditorError, setTagEditorError] = useState<string | null>(null)
-
-    const [actorEditorMovie, setActorEditorMovie] = useState<MovieSummary | null>(null)
-    const [allActors, setAllActors] = useState<ActorSummary[]>([])
-    const [editedActorIds, setEditedActorIds] = useState<number[]>([])
-    const [newActorName, setNewActorName] = useState('')
-    const [loadingActors, setLoadingActors] = useState(false)
-    const [savingActors, setSavingActors] = useState(false)
-    const [creatingActor, setCreatingActor] = useState(false)
-    const [actorEditorError, setActorEditorError] = useState<string | null>(null)
-
-    const tagFilteredMovies = useMemo(() => {
-        if (includedTagId !== null) {
-            return movies.filter((movie) =>
-                movie.tags.some((tag) => tag.id === includedTagId)
-            )
-        }
-
-        if (excludedTagIds.length === 0) return movies
-
-        const excluded = new Set(excludedTagIds)
-        return movies.filter(
-            (movie) => !movie.tags.some((tag) => excluded.has(tag.id))
-        )
-    }, [movies, excludedTagIds, includedTagId])
-
-    const visibleMovies = useMemo(() => {
-        if (selectedActorIds.length === 0) return tagFilteredMovies
-
-        const selected = new Set(selectedActorIds)
-
-        return tagFilteredMovies.filter((movie) =>
-            movie.actors.some((actor) => selected.has(actor.id))
-        )
-    }, [tagFilteredMovies, selectedActorIds])
-
-    const playableVisibleMovies = useMemo(
-        () => visibleMovies.filter((movie) => movie.available),
-        [visibleMovies]
+    const {
+        movies,
+        excludedTagIds,
+        includedTagId,
+        loading,
+        importing,
+        dragging,
+        importResult,
+        error,
+        tagEditorMovie,
+        allTags,
+        editedTagIds,
+        newTagName,
+        loadingTags,
+        savingTags,
+        creatingTag,
+        tagEditorError,
+        actorEditorMovie,
+        allActors,
+        editedActorIds,
+        newActorName,
+        loadingActors,
+        savingActors,
+        creatingActor,
+        actorEditorError,
+        setDragging,
+        importDroppedFiles,
+        playMovie: play,
+        playVisibleMovies,
+        deleteMovie: remove,
+        excludeTag,
+        includeOnlyTag,
+        removeTagExclusion,
+        clearTagInclusion,
+        selectActor,
+        removeActorFilter,
+        openTagEditor,
+        closeTagEditor,
+        toggleEditedTag,
+        setNewTagName,
+        createTag,
+        saveTags,
+        openActorEditor,
+        closeActorEditor,
+        toggleEditedActor,
+        setNewActorName,
+        createActor,
+        saveActors,
+        currentPage,
+        pageSize,
+        setPage,
+        setPageSize,
+    } = useMovieLibraryStore(
+        useShallow((state) => ({
+            movies: state.movies,
+            excludedTagIds: state.excludedTagIds,
+            includedTagId: state.includedTagId,
+            selectedActorIds: state.selectedActorIds,
+            form: state.form,
+            loading: state.loading,
+            importing: state.importing,
+            dragging: state.dragging,
+            importResult: state.importResult,
+            error: state.error,
+            tagEditorMovie: state.tagEditorMovie,
+            allTags: state.allTags,
+            editedTagIds: state.editedTagIds,
+            newTagName: state.newTagName,
+            loadingTags: state.loadingTags,
+            savingTags: state.savingTags,
+            creatingTag: state.creatingTag,
+            tagEditorError: state.tagEditorError,
+            actorEditorMovie: state.actorEditorMovie,
+            allActors: state.allActors,
+            editedActorIds: state.editedActorIds,
+            newActorName: state.newActorName,
+            loadingActors: state.loadingActors,
+            savingActors: state.savingActors,
+            creatingActor: state.creatingActor,
+            actorEditorError: state.actorEditorError,
+            setDragging: state.setDragging,
+            setFormField: state.setFormField,
+            chooseFile: state.chooseFile,
+            importDroppedFiles: state.importDroppedFiles,
+            createMovie: state.createMovie,
+            playMovie: state.playMovie,
+            playVisibleMovies: state.playVisibleMovies,
+            deleteMovie: state.deleteMovie,
+            excludeTag: state.excludeTag,
+            includeOnlyTag: state.includeOnlyTag,
+            removeTagExclusion: state.removeTagExclusion,
+            clearTagInclusion: state.clearTagInclusion,
+            selectActor: state.selectActor,
+            removeActorFilter: state.removeActorFilter,
+            openTagEditor: state.openTagEditor,
+            closeTagEditor: state.closeTagEditor,
+            toggleEditedTag: state.toggleEditedTag,
+            setNewTagName: state.setNewTagName,
+            createTag: state.createTag,
+            saveTags: state.saveTags,
+            openActorEditor: state.openActorEditor,
+            closeActorEditor: state.closeActorEditor,
+            toggleEditedActor: state.toggleEditedActor,
+            setNewActorName: state.setNewActorName,
+            createActor: state.createActor,
+            saveActors: state.saveActors,
+            currentPage: state.currentPage,
+            pageSize: state.pageSize,
+            setPage: state.setPage,
+            setPageSize: state.setPageSize,
+        }))
     )
 
-    const includedTag = useMemo(() => {
-        if (includedTagId === null) return null
-        return collectTags(movies).get(includedTagId) ?? null
-    }, [movies, includedTagId])
-
-    const excludedTags = useMemo(() => {
-        const tagsById = collectTags(movies)
-
-        return excludedTagIds
-            .map((tagId) => tagsById.get(tagId))
-            .filter((tag): tag is TagSummary => tag !== undefined)
-    }, [movies, excludedTagIds])
-
-    const availableTags = useMemo(() => {
-        const excluded = new Set(excludedTagIds)
-
-        return [...collectTags(movies).values()]
-            .filter((tag) => tag.id !== includedTagId && !excluded.has(tag.id))
-            .sort(compareTags)
-    }, [movies, excludedTagIds, includedTagId])
-
-    const selectedActors = useMemo(() => {
-        const actorsById = collectActors(movies)
-
-        return selectedActorIds
-            .map((actorId) => actorsById.get(actorId))
-            .filter((actor): actor is ActorSummary => actor !== undefined)
-    }, [movies, selectedActorIds])
-
-    const availableActors = useMemo(() => {
-        const selected = new Set(selectedActorIds)
-
-        return [...collectActors(tagFilteredMovies).values()]
-            .filter((actor) => !selected.has(actor.id))
-            .sort(compareActors)
-    }, [visibleMovies, selectedActorIds])
-
-    const reload = useCallback(async () => {
-        setLoading(true)
-        try {
-            const nextMovies = await window.movieLibrary.listMovies()
-            const knownTagIds = new Set(
-                nextMovies.flatMap((movie) => movie.tags.map((tag) => tag.id))
-            )
-            const knownActorIds = new Set(
-                nextMovies.flatMap((movie) => movie.actors.map((actor) => actor.id))
-            )
-
-            setMovies(nextMovies)
-            setExcludedTagIds((current) => current.filter((tagId) => knownTagIds.has(tagId)))
-            setIncludedTagId((current) =>
-                current !== null && knownTagIds.has(current) ? current : null
-            )
-            setSelectedActorIds((current) =>
-                current.filter((actorId) => knownActorIds.has(actorId))
-            )
-            setError(null)
-        } catch (err) {
-            setError(toMessage(err))
-        } finally {
-            setLoading(false)
-        }
-    }, [])
-
-    useEffect(() => {
-        void reload()
-    }, [reload])
+    const visibleMovies = useMovieLibraryStore(useShallow(selectVisibleMovies))
+    const paginatedMovies = useMovieLibraryStore(useShallow(selectPaginatedMovies))
+    const playableVisibleMovies = useMovieLibraryStore(useShallow(selectPlayableVisibleMovies))
+    const totalPages = useMovieLibraryStore(selectTotalPages)
+    const includedTag = useMovieLibraryStore(selectIncludedTag)
+    const excludedTags = useMovieLibraryStore(useShallow(selectExcludedTags))
+    const availableTags = useMovieLibraryStore(useShallow(selectAvailableTags))
+    const selectedActors = useMovieLibraryStore(useShallow(selectSelectedActors))
+    const availableActors = useMovieLibraryStore(useShallow(selectAvailableActors))
 
     // Prevent Chromium from navigating to a file when it is dropped outside
     // our drop target.
@@ -173,293 +168,16 @@ export default function App(): React.JSX.Element {
         }
     }, [])
 
-    async function chooseFile(): Promise<void> {
-        const picked = await window.movieLibrary.pickMovieFile()
-        if (!picked) return
-
-        setForm((current) => ({
-            ...current,
-            filepath: picked.filepath,
-            title: current.title || picked.suggestedTitle
-        }))
-    }
-
-    async function importDroppedFiles(event: DragEvent<HTMLDivElement>): Promise<void> {
+    function submitTag(event: FormEvent): void {
         event.preventDefault()
-        event.stopPropagation()
-        setDragging(false)
-
-        const files = Array.from(event.dataTransfer.files)
-        if (files.length === 0) {
-            console.log('files.length === 0)')
-            return
-        }
-
-        setImporting(true)
-        setImportResult(null)
-        setError(null)
-
-        try {
-            const result = await window.movieLibrary.importDroppedFiles(files)
-            setImportResult(result)
-            await reload()
-        } catch (err) {
-            setError(toMessage(err))
-        } finally {
-            setImporting(false)
-        }
+        void createTag()
     }
 
-    async function playVisibleMovies(): Promise<void> {
-        if (playableVisibleMovies.length === 0) return
-
-        try {
-            await window.movieLibrary.playMovies(playableVisibleMovies.map((movie) => movie.id))
-            setError(null)
-        } catch (err) {
-            setError(toMessage(err))
-        }
-    }
-
-    async function remove(id: number): Promise<void> {
-        try {
-            await window.movieLibrary.deleteMovie(id)
-            await reload()
-        } catch (err) {
-            setError(toMessage(err))
-        }
-    }
-
-    async function play(id: number): Promise<void> {
-        try {
-            await window.movieLibrary.playMovie(id)
-            setError(null)
-        } catch (err) {
-            setError(toMessage(err))
-        }
-    }
-
-    async function openTagEditor(movie: MovieSummary): Promise<void> {
-        setTagEditorMovie(movie)
-        setEditedTagIds(movie.tags.map((tag) => tag.id))
-        setNewTagName('')
-        setLoadingTags(true)
-        setTagEditorError(null)
-        setError(null)
-
-        try {
-            setAllTags(await window.movieLibrary.listTags())
-        } catch (err) {
-            setTagEditorMovie(null)
-            setError(toMessage(err))
-        } finally {
-            setLoadingTags(false)
-        }
-    }
-
-    function closeTagEditor(): void {
-        if (savingTags || creatingTag) return
-        setTagEditorMovie(null)
-        setAllTags([])
-        setEditedTagIds([])
-        setNewTagName('')
-        setTagEditorError(null)
-    }
-
-    function toggleEditedTag(tagId: number): void {
-        setEditedTagIds((current) =>
-            current.includes(tagId)
-                ? current.filter((id) => id !== tagId)
-                : [...current, tagId]
-        )
-    }
-
-    async function createTag(event: FormEvent): Promise<void> {
+    function submitActor(event: FormEvent): void {
         event.preventDefault()
-        const name = newTagName.trim()
-        if (!name) return
-
-        setCreatingTag(true)
-        setTagEditorError(null)
-
-        try {
-            const tag = await window.movieLibrary.createTag(name)
-            setAllTags((current) =>
-                [...current.filter((item) => item.id !== tag.id), tag].sort(compareTags)
-            )
-            setEditedTagIds((current) =>
-                current.includes(tag.id) ? current : [...current, tag.id]
-            )
-            setNewTagName('')
-            setTagEditorError(null)
-        } catch (err) {
-            setTagEditorError(toMessage(err))
-        } finally {
-            setCreatingTag(false)
-        }
+        void createActor()
     }
 
-    async function saveTags(): Promise<void> {
-        if (!tagEditorMovie) return
-
-        setSavingTags(true)
-        setTagEditorError(null)
-
-        try {
-            const updated = await window.movieLibrary.updateMovieTags(
-                tagEditorMovie.id,
-                editedTagIds
-            )
-            const nextMovies = movies.map((movie) =>
-                movie.id === updated.id ? updated : movie
-            )
-            const knownTagIds = new Set(
-                nextMovies.flatMap((movie) => movie.tags.map((tag) => tag.id))
-            )
-            const knownActorIds = new Set(
-                nextMovies.flatMap((movie) => movie.actors.map((actor) => actor.id))
-            )
-
-            setMovies(nextMovies)
-            setExcludedTagIds((current) => current.filter((tagId) => knownTagIds.has(tagId)))
-            setIncludedTagId((current) =>
-                current !== null && knownTagIds.has(current) ? current : null
-            )
-            setSelectedActorIds((current) =>
-                current.filter((actorId) => knownActorIds.has(actorId))
-            )
-            setTagEditorMovie(null)
-            setAllTags([])
-            setEditedTagIds([])
-            setNewTagName('')
-        } catch (err) {
-            setTagEditorError(toMessage(err))
-        } finally {
-            setSavingTags(false)
-        }
-    }
-
-    async function openActorEditor(movie: MovieSummary): Promise<void> {
-        setActorEditorMovie(movie)
-        setEditedActorIds(movie.actors.map((actor) => actor.id))
-        setNewActorName('')
-        setLoadingActors(true)
-        setActorEditorError(null)
-        setError(null)
-
-        try {
-            setAllActors(await window.movieLibrary.listActors())
-        } catch (err) {
-            setActorEditorMovie(null)
-            setError(toMessage(err))
-        } finally {
-            setLoadingActors(false)
-        }
-    }
-
-    function closeActorEditor(): void {
-        if (savingActors || creatingActor) return
-        setActorEditorMovie(null)
-        setAllActors([])
-        setEditedActorIds([])
-        setNewActorName('')
-        setActorEditorError(null)
-    }
-
-    function toggleEditedActor(actorId: number): void {
-        setEditedActorIds((current) =>
-            current.includes(actorId)
-                ? current.filter((id) => id !== actorId)
-                : [...current, actorId]
-        )
-    }
-
-    async function createActor(event: FormEvent): Promise<void> {
-        event.preventDefault()
-        const name = newActorName.trim()
-        if (!name) return
-
-        setCreatingActor(true)
-        setActorEditorError(null)
-
-        try {
-            const actor = await window.movieLibrary.createActor(name)
-            setAllActors((current) =>
-                [...current.filter((item) => item.id !== actor.id), actor].sort(compareActors)
-            )
-            setEditedActorIds((current) =>
-                current.includes(actor.id) ? current : [...current, actor.id]
-            )
-            setNewActorName('')
-        } catch (err) {
-            setActorEditorError(toMessage(err))
-        } finally {
-            setCreatingActor(false)
-        }
-    }
-
-    async function saveActors(): Promise<void> {
-        if (!actorEditorMovie) return
-
-        setSavingActors(true)
-        setActorEditorError(null)
-
-        try {
-            const updated = await window.movieLibrary.updateMovieActors(
-                actorEditorMovie.id,
-                editedActorIds
-            )
-            const nextMovies = movies.map((movie) =>
-                movie.id === updated.id ? updated : movie
-            )
-            const knownActorIds = new Set(
-                nextMovies.flatMap((movie) => movie.actors.map((actor) => actor.id))
-            )
-
-            setMovies(nextMovies)
-            setSelectedActorIds((current) =>
-                current.filter((actorId) => knownActorIds.has(actorId))
-            )
-            setActorEditorMovie(null)
-            setAllActors([])
-            setEditedActorIds([])
-            setNewActorName('')
-        } catch (err) {
-            setActorEditorError(toMessage(err))
-        } finally {
-            setSavingActors(false)
-        }
-    }
-
-    function selectActor(actorId: number): void {
-        setSelectedActorIds((current) =>
-            current.includes(actorId) ? current : [...current, actorId]
-        )
-    }
-
-    function removeActorFilter(actorId: number): void {
-        setSelectedActorIds((current) => current.filter((id) => id !== actorId))
-    }
-
-    function excludeTag(tagId: number): void {
-        setIncludedTagId(null)
-        setExcludedTagIds((current) =>
-            current.includes(tagId) ? current : [...current, tagId]
-        )
-    }
-
-    function includeOnlyTag(tagId: number): void {
-        setExcludedTagIds([])
-        setIncludedTagId(tagId)
-    }
-
-    function removeTagExclusion(tagId: number): void {
-        setExcludedTagIds((current) => current.filter((id) => id !== tagId))
-    }
-
-    function clearTagInclusion(): void {
-        setIncludedTagId(null)
-    }
 
     return (
         <main className="app-shell">
@@ -470,11 +188,6 @@ export default function App(): React.JSX.Element {
                 <div className="section-header">
                     <h2>Library</h2>
                     <div className="library-status">
-                        <div className="movie-count">
-                            {excludedTagIds.length > 0
-                                ? `${visibleMovies.length} of ${movies.length} movies`
-                                : `${movies.length} movie${movies.length === 1 ? '' : 's'}`}
-                        </div>
                         <IconButton
                             label={`Play ${playableVisibleMovies.length} available movie${playableVisibleMovies.length === 1 ? '' : 's'}`}
                             onClick={() => void playVisibleMovies()}
@@ -598,7 +311,7 @@ export default function App(): React.JSX.Element {
                     <p className="muted">Loading…</p>
                 ) : movies.length === 0 ? (
                     <p className="muted">No movies yet. Drop video files below to get started.</p>
-                ) : visibleMovies.length === 0 ? (
+                ) : paginatedMovies.length === 0 ? (
                     <p className="muted">
                         {excludedTagIds.length > 0
                             ? 'No movies match the selected tags.'
@@ -610,95 +323,121 @@ export default function App(): React.JSX.Element {
                                 : 'No movies yet. Drop video files above to get started.'}
                     </p>
                 ) : (
-                    <div className="table-wrap">
-                        <table>
-                            <thead>
-                            <tr>
-                                <th>Release</th>
-                                <th>Publisher</th>
-                                <th>Title</th>
-                                <th>Actors</th>
-                                <th>Tags</th>
-                                <th>Filename</th>
-                                <th aria-label="Actions"/>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {visibleMovies.map((movie) => (
-                                <tr
-                                    key={movie.id}
-                                    className={`movie-row${movie.available ? '' : ' movie-row--unavailable'}`}
-                                    title={
-                                        movie.available
-                                            ? `${movie.filepath}\nDouble-click to play`
-                                            : `${movie.filepath}\nFile unavailable`
-                                    }
-                                    onDoubleClick={() => {
-                                        if (movie.available) void play(movie.id)
-                                    }}
-                                >
-                                    <td>{movie.releaseDate}</td>
-                                    <td>{movie.publisherName}</td>
-                                    <td>{movie.title}</td>
-                                    <td>
-                                        {movie.actors.length > 0 ? (
-                                            <div className="movie-actors">
-                                                {movie.actors.map((actor) => (
-                                                    <span key={actor.id} className="actor-badge">
+                    <div>
+                        <MovieTable>
+                                <TableHeader>
+                                    <TableColumn name={'Title'} />
+                                    <TableColumn name={'Actors'} />
+                                    <TableColumn name={'Tags'} />
+                                    <TableColumn name={''} aria-label="Actions" />
+                                </TableHeader>
+                                <tbody>
+                                {paginatedMovies.map((movie) => (
+                                    <tr
+                                        key={movie.id}
+                                        className={`movie-row${movie.available ? '' : ' movie-row--unavailable'}`}
+                                        title={
+                                            movie.available
+                                                ? `${movie.filepath}\nDouble-click to play`
+                                                : `${movie.filepath}\nFile unavailable`
+                                        }
+                                        onDoubleClick={() => {
+                                            if (movie.available) void play(movie.id)
+                                        }}
+                                    >
+                                        <td>{movie.title}</td>
+                                        <td>
+                                            {movie.actors.length > 0 ? (
+                                                <div className="movie-actors">
+                                                    {movie.actors.map((actor) => (
+                                                        <span key={actor.id} className="actor-badge">
                               {actor.name}
                             </span>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <span className="muted">—</span>
-                                        )}
-                                    </td>
-                                    <td>
-                                        {movie.tags.length > 0 ? (
-                                            <div className="movie-tags">
-                                                {movie.tags.map((tag) => (
-                                                    <span key={tag.id} className="tag-badge">
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <span className="muted">—</span>
+                                            )}
+                                        </td>
+                                        <td>
+                                            {movie.tags.length > 0 ? (
+                                                <div className="movie-tags">
+                                                    {movie.tags.map((tag) => (
+                                                        <span key={tag.id} className="tag-badge">
                               {tag.name}
                             </span>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <span className="muted">—</span>
-                                        )}
-                                    </td>
-                                    <td className="filename">{movie.filename}</td>
-                                    <td className="actions">
-                                        <IconButton
-                                            label={`Delete ${movie.title}`}
-                                            variant="danger"
-                                            onClick={() => void remove(movie.id)}
-                                        >
-                                            <TrashIcon/>
-                                        </IconButton>
-                                        <IconButton
-                                            label={`Edit tags for ${movie.title}`}
-                                            onClick={() => void openTagEditor(movie)}
-                                        >
-                                            <TagIcon/>
-                                        </IconButton>
-                                        <IconButton
-                                            label={`Edit actors for ${movie.title}`}
-                                            onClick={() => void openActorEditor(movie)}
-                                        >
-                                            <ActorIcon/>
-                                        </IconButton>
-                                        <IconButton
-                                            label={movie.available ? `Play ${movie.title}` : `${movie.title} is unavailable`}
-                                            onClick={() => void play(movie.id)}
-                                            disabled={!movie.available}
-                                        >
-                                            <PlayIcon/>
-                                        </IconButton>
-                                    </td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <span className="muted">—</span>
+                                            )}
+                                        </td>
+                                        {/* <td className="filename">{movie.filename}</td> */}
+                                        <td className="actions">
+                                            <IconButton
+                                                label={`Delete ${movie.title}`}
+                                                variant="danger"
+                                                onClick={() => void remove(movie.id)}
+                                            >
+                                                <TrashIcon/>
+                                            </IconButton>
+                                            <IconButton
+                                                label={`Edit tags for ${movie.title}`}
+                                                onClick={() => void openTagEditor(movie)}
+                                            >
+                                                <TagIcon/>
+                                            </IconButton>
+                                            <IconButton
+                                                label={`Edit actors for ${movie.title}`}
+                                                onClick={() => void openActorEditor(movie)}
+                                            >
+                                                <ActorIcon/>
+                                            </IconButton>
+                                            <IconButton
+                                                label={movie.available ? `Play ${movie.title}` : `${movie.title} is unavailable`}
+                                                onClick={() => void play(movie.id)}
+                                                disabled={!movie.available}
+                                            >
+                                                <PlayIcon/>
+                                            </IconButton>
+                                        </td>
+                                    </tr>
+                                ))}
+                                </tbody>
+                        </MovieTable>
+                        <div className="pagination" aria-label="Movie list pagination">
+                    <span className="muted">
+                    Showing {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, visibleMovies.length)} of {visibleMovies.length}
+            </span>
+                            <div className="pagination-controls">
+                                <label className="pagination-page-size">
+                                    <span>Per page</span>
+                                    <select
+                                        value={pageSize}
+                                        onChange={(event) => setPageSize(Number(event.target.value))}
+                                    >
+                                        {MOVIES_PER_PAGE_OPTIONS.map((size) => (
+                                            <option key={size} value={size}>{size}</option>
+                                        ))}
+                                    </select>
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => setPage(currentPage - 1)}
+                                    disabled={currentPage <= 1}
+                                >
+                                    Previous
+                                </button>
+                                <span className="movie-count">Page {currentPage} of {totalPages}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setPage(currentPage + 1)}
+                                    disabled={currentPage >= totalPages}
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
             </Panel>
@@ -755,7 +494,7 @@ export default function App(): React.JSX.Element {
                         closeDisabled={savingTags || creatingTag}
                     />
 
-                    <form className="tag-create-form" onSubmit={(event) => void createTag(event)}>
+                    <form className="tag-create-form" onSubmit={submitTag}>
                         <input
                             value={newTagName}
                             onChange={(event) => setNewTagName(event.target.value)}
@@ -798,9 +537,7 @@ export default function App(): React.JSX.Element {
                     </div>
 
                     <DialogFooter>
-            <span className="muted">
-              {editedTagIds.length} tag{editedTagIds.length === 1 ? '' : 's'} selected
-            </span>
+                        <SelectionCount elementNameSingular={'tag'} count={editedTagIds.length}/>
                         <DialogActions>
                             <button
                                 className="primary"
@@ -829,7 +566,7 @@ export default function App(): React.JSX.Element {
                         closeDisabled={savingActors || creatingActor}
                     />
 
-                    <form className="actor-create-form" onSubmit={(event) => void createActor(event)}>
+                    <form className="actor-create-form" onSubmit={submitActor}>
                         <input
                             value={newActorName}
                             onChange={(event) => setNewActorName(event.target.value)}
@@ -874,14 +611,12 @@ export default function App(): React.JSX.Element {
                     </div>
 
                     <DialogFooter>
-            <span className="muted">
-              {editedTagIds.length} tag{editedTagIds.length === 1 ? '' : 's'} selected
-            </span>
+                        <SelectionCount elementNameSingular={'actor'} count={editedActorIds.length}/>
                         <DialogActions>
                             <button
                                 className="primary"
                                 type="button"
-                                onClick={() => void closeActorEditor()}
+                                onClick={() => void saveActors()}
                                 disabled={loadingActors || savingActors || creatingActor}
                             >
                                 {savingTags ? 'Saving…' : 'Save actors'}
@@ -893,40 +628,4 @@ export default function App(): React.JSX.Element {
 
         </main>
     )
-}
-
-function collectTags(movies: MovieSummary[]): Map<number, TagSummary> {
-    const tags = new Map<number, TagSummary>()
-
-    for (const movie of movies) {
-        for (const tag of movie.tags) {
-            tags.set(tag.id, tag)
-        }
-    }
-
-    return tags
-}
-
-function compareTags(left: TagSummary, right: TagSummary): number {
-    return left.name.localeCompare(right.name)
-}
-
-function collectActors(movies: MovieSummary[]): Map<number, ActorSummary> {
-    const actors = new Map<number, ActorSummary>()
-
-    for (const movie of movies) {
-        for (const actor of movie.actors) {
-            actors.set(actor.id, actor)
-        }
-    }
-
-    return actors
-}
-
-function compareActors(left: ActorSummary, right: ActorSummary): number {
-    return left.name.localeCompare(right.name)
-}
-
-function toMessage(error: unknown): string {
-    return error instanceof Error ? error.message : String(error)
 }
