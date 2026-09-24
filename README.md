@@ -1,8 +1,9 @@
-# Movie Library
+[![Tests](https://github.com/MichaelMiller-/movdb/actions/workflows/test.yml/badge.svg)](https://github.com/MichaelMiller-/movdb/actions/workflows/test.yml)
+[![Release Linux](https://github.com/MichaelMiller-/movdb/actions/workflows/release-linux.yml/badge.svg)](https://github.com/MichaelMiller-/movdb/actions/workflows/release-linux.yml)
 
-## Requirements
+# movdb
 
-Use a Node.js version supported by electron-vite 5 (Node 20.19+ or 22.12+).
+A movie library manager.
 
 ## Run
 
