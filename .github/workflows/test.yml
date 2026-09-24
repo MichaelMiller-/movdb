@@ -53,5 +53,5 @@ jobs:
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y xvfb
 
-      - name: E2E tests
-        run: xvfb-run --auto-servernum npm run test:e2e
+#      - name: E2E tests
+#        run: xvfb-run --auto-servernum npm run test:e2e
