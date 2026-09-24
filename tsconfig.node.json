@@ -11,7 +11,7 @@
     "useDefineForClassFields": false,
     "types": ["node", "electron-vite/node"],
     "paths": {
-      "@shared/*": ["src/shared/*"]
+      "@shared/*": ["./src/shared/*"]
     }
   },
   "include": [
