@@ -46,7 +46,7 @@ jobs:
         run: npm run typecheck
 
       - name: Unit tests
-        run: npm run test:unit
+        run: npm run test
 
       - name: Install virtual display
         run: |
@@ -54,5 +54,4 @@ jobs:
           sudo apt-get install --no-install-recommends -y xvfb
 
       - name: Run playwright tests
-        run: xvfb-run npm run test:e2e
-
+        run: xvfb-run npm run test:playwright

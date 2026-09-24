@@ -1,5 +1,5 @@
 {
-  "name": "movie-library",
+  "name": "movdb",
   "version": "0.1.0",
   "private": true,
   "description": "Local-first movie library built with Electron, React, TypeScript and SQLite",
