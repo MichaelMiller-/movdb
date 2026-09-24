@@ -1,4 +1,5 @@
 import {
+    type DragEvent,
     FormEvent,
     useEffect,
 } from 'react'
@@ -166,7 +167,7 @@ export default function App(): React.JSX.Element {
         void createActor()
     }
 
-    async function handleDrop(event: DragEvent): Promise<void> {
+    async function handleDrop(event: DragEvent<HTMLDivElement>): Promise<void> {
         event.preventDefault()
         if (event.dataTransfer) {
             const files = Array.from(event.dataTransfer.files)
