@@ -178,6 +178,17 @@ export default function App(): React.JSX.Element {
         void createActor()
     }
 
+    async function handleDrop(event: DragEvent): Promise<void> {
+        event.preventDefault()
+        if (event.dataTransfer) {
+            const files = Array.from(event.dataTransfer.files)
+            if (files.length === 0) {
+                console.log('files.length === 0)')
+                return
+            }
+            void importDroppedFiles(files)
+        }
+    }
 
     return (
         <main className="app-shell">
@@ -326,6 +337,7 @@ export default function App(): React.JSX.Element {
                     <div>
                         <MovieTable>
                                 <TableHeader>
+                                    <TableColumn name={'Filename'} />
                                     <TableColumn name={'Title'} />
                                     <TableColumn name={'Actors'} />
                                     <TableColumn name={'Tags'} />
@@ -345,6 +357,7 @@ export default function App(): React.JSX.Element {
                                             if (movie.available) void play(movie.id)
                                         }}
                                     >
+                                        <td>{movie.filename}</td>
                                         <td>{movie.title}</td>
                                         <td>
                                             {movie.actors.length > 0 ? (
@@ -460,7 +473,7 @@ export default function App(): React.JSX.Element {
                             setDragging(false)
                         }
                     }}
-                    onDrop={(event) => void importDroppedFiles(event)}
+                    onDrop={(event) => handleDrop(event)}
                     aria-busy={importing}
                 >
                     <strong>{importing ? 'Adding movies…' : 'Drop video files or folders here'}</strong>

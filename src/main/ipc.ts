@@ -88,6 +88,7 @@ export function registerIpcHandlers(dataSource: DataSource): void {
       throw new Error('Movie file is currently unavailable.')
     }
 
+    console.log(`Play movie: ${movie.filepath}`)
     const errorMessage = await shell.openPath(movie.filepath)
     if (errorMessage) {
       throw new Error(errorMessage)
