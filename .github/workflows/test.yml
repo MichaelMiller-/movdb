@@ -46,12 +46,12 @@ jobs:
         run: npm run typecheck
 
       - name: Unit tests
-        run: npm run test
+        run: npm run test:unit
 
       - name: Install virtual display
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y xvfb
 
-      - name: Run playwright tests
-        run: xvfb-run npm run test:playwright
+      - name: E2E tests
+        run: xvfb-run --auto-servernum npm run test:e2e

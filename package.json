@@ -15,8 +15,10 @@
     "build:appimage": "npm run build && electron-builder --linux AppImage",
     "build:deb": "npm run build && electron-builder --linux deb",
     "setup": "npx install-electron --no",
-    "test": "npm test",
-    "test:playwright": "npm run build && playwright test"
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:e2e": "npm run build && playwright test"
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1",
