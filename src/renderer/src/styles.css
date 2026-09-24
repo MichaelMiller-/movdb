@@ -466,3 +466,27 @@ td { font-size: 14px; }
 .actor-editor-error {
   margin-bottom: 14px;
 }
+
+
+.filepath-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.filepath-filter input {
+  flex: 1;
+  min-width: 0;
+}
+
+.filter-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.filter-row > * {
+  flex: 1;
+  min-width: 0;
+}

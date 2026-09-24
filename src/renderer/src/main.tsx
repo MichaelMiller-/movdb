@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
-import { useMovieLibraryStore } from './stores/movieLibraryStore'
+import { useMovieLibraryStore } from './store'
 import './styles.css'
 
 void useMovieLibraryStore.getState().reload()

@@ -5,7 +5,7 @@ import {
   selectTotalPages,
   selectVisibleMovies,
   useMovieLibraryStore
-} from '../../src/renderer/src/stores/movieLibraryStore'
+} from '../../src/renderer/src/store'
 
 const defaultStoreState = {
   movies: [] as MovieSummary[],
@@ -145,7 +145,6 @@ function makeMovie(
   return {
     id,
     title: `Movie ${String(id).padStart(2, '0')}`,
-    originalTitle: null,
     releaseDate: null,
     publisherName: null,
     filename: `movie-${id}.mp4`,

@@ -6,7 +6,7 @@ import type {
   MovieImportResult,
   MovieSummary,
   TagSummary
-} from '../../../shared/movies'
+} from '../../shared/movies'
 
 export const MOVIES_PER_PAGE_OPTIONS = [10, 25, 50, 100] as const
 const DEFAULT_PAGE_SIZE = 10
@@ -86,6 +86,10 @@ export interface MovieLibraryStore {
   setNewActorName: (name: string) => void
   createActor: () => Promise<void>
   saveActors: () => Promise<void>
+
+    // filter
+    filepathFilter: string
+    setFilepathFilter: (filepath: string) => void
 }
 
 export const selectTagFilteredMovies = (state: MovieLibraryStore): MovieSummary[] => {
@@ -103,14 +107,44 @@ export const selectTagFilteredMovies = (state: MovieLibraryStore): MovieSummary[
   )
 }
 
-export const selectVisibleMovies = (state: MovieLibraryStore): MovieSummary[] => {
-  const tagFilteredMovies = selectTagFilteredMovies(state)
-  if (state.selectedActorIds.length === 0) return tagFilteredMovies
+export const selectActorFilteredMovies = (
+    state: MovieLibraryStore
+): MovieSummary[] => {
+    const tagFilteredMovies = selectTagFilteredMovies(state)
 
-  const selected = new Set(state.selectedActorIds)
-  return tagFilteredMovies.filter((movie) =>
-    movie.actors.some((actor) => selected.has(actor.id))
-  )
+    if (state.selectedActorIds.length === 0) {
+        return tagFilteredMovies
+    }
+
+    const selected = new Set(state.selectedActorIds)
+
+    return tagFilteredMovies.filter((movie) =>
+        movie.actors.some((actor) => selected.has(actor.id))
+    )
+}
+
+function normalizeFilepath(filepath: string): string {
+    return filepath
+        .replaceAll('\\', '/')
+        .toLowerCase()
+}
+
+export const selectFilepathFilteredMovies = (
+    state: MovieLibraryStore
+): MovieSummary[] => {
+    const filter = normalizeFilepath(state.filepathFilter.trim())
+
+    if (!filter) {
+        return selectActorFilteredMovies(state)
+    }
+
+    return selectActorFilteredMovies(state).filter((movie) =>
+        normalizeFilepath(movie.filepath).includes(filter)
+    )
+}
+
+export const selectVisibleMovies = (state: MovieLibraryStore): MovieSummary[] => {
+    return selectFilepathFilteredMovies(state)
 }
 
 export const selectPlayableVisibleMovies = (state: MovieLibraryStore): MovieSummary[] =>
@@ -197,6 +231,17 @@ export const useMovieLibraryStore = create<MovieLibraryStore>()(
       savingActors: false,
       creatingActor: false,
       actorEditorError: null,
+
+        filepathFilter: '',
+        setFilepathFilter: (filepathFilter) =>
+            set(
+                {
+                    filepathFilter,
+                    currentPage: 1
+                },
+                false,
+                'filters/filepath'
+            ),
 
       reload: async () => {
         set({ loading: true }, false, 'movies/reload:start')

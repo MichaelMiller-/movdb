@@ -11,20 +11,21 @@ import {ActorIcon} from "@renderer/components/icons/ActorIcon";
 import {Dialog, DialogActions, DialogFooter, DialogHeader} from "@renderer/components/Dialog";
 import {
     MOVIES_PER_PAGE_OPTIONS,
-    selectAvailableActors,
-    selectAvailableTags,
-    selectExcludedTags,
-    selectIncludedTag, selectPaginatedMovies,
-    selectPlayableVisibleMovies,
-    selectSelectedActors, selectTotalPages,
+    selectPaginatedMovies,
+    selectTotalPages,
     selectVisibleMovies,
     useMovieLibraryStore,
-} from './stores/movieLibraryStore'
+} from './store'
 import {useShallow} from "zustand/react/shallow";
 import {SelectionCount} from "@renderer/components/SelectionCount";
 import {TableHeader} from "@renderer/components/TableHeader";
 import {MovieTable} from "@renderer/components/MovieTable";
 import {TableColumn} from "@renderer/components/TableColumn";
+import {LibraryStatus} from "@renderer/components/LibraryStatus";
+import {FilepathFilter} from "@renderer/components/FilepathFilter";
+import {TagFilter} from "@renderer/components/TagFilter";
+import {ActorFilter} from "@renderer/components/ActorFilter";
+import {Row} from "@renderer/components/Row";
 
 export default function App(): React.JSX.Element {
     const {
@@ -55,14 +56,7 @@ export default function App(): React.JSX.Element {
         setDragging,
         importDroppedFiles,
         playMovie: play,
-        playVisibleMovies,
         deleteMovie: remove,
-        excludeTag,
-        includeOnlyTag,
-        removeTagExclusion,
-        clearTagInclusion,
-        selectActor,
-        removeActorFilter,
         openTagEditor,
         closeTagEditor,
         toggleEditedTag,
@@ -142,13 +136,7 @@ export default function App(): React.JSX.Element {
 
     const visibleMovies = useMovieLibraryStore(useShallow(selectVisibleMovies))
     const paginatedMovies = useMovieLibraryStore(useShallow(selectPaginatedMovies))
-    const playableVisibleMovies = useMovieLibraryStore(useShallow(selectPlayableVisibleMovies))
     const totalPages = useMovieLibraryStore(selectTotalPages)
-    const includedTag = useMovieLibraryStore(selectIncludedTag)
-    const excludedTags = useMovieLibraryStore(useShallow(selectExcludedTags))
-    const availableTags = useMovieLibraryStore(useShallow(selectAvailableTags))
-    const selectedActors = useMovieLibraryStore(useShallow(selectSelectedActors))
-    const availableActors = useMovieLibraryStore(useShallow(selectAvailableActors))
 
     // Prevent Chromium from navigating to a file when it is dropped outside
     // our drop target.
@@ -196,127 +184,12 @@ export default function App(): React.JSX.Element {
             {error && <div className="error-box">{error}</div>}
 
             <Panel>
-                <div className="section-header">
-                    <h2>Library</h2>
-                    <div className="library-status">
-                        <IconButton
-                            label={`Play ${playableVisibleMovies.length} available movie${playableVisibleMovies.length === 1 ? '' : 's'}`}
-                            onClick={() => void playVisibleMovies()}
-                            disabled={playableVisibleMovies.length === 0}
-                        >
-                            <PlayIcon/>
-                        </IconButton>
-                    </div>
-                </div>
-
-                {!loading && movies.length > 0 && (
-                    <div className="tag-filter-panel" aria-label="Tag filters">
-            <span className="muted tag-filter-hint">
-              Click a tag to exclude it · Shift+click to show only that tag
-            </span>
-
-                        {includedTag && (
-                            <div className="included-tag-filter">
-                                <span className="tag-filter-label">Only</span>
-                                <button
-                                    className="tag-filter-button tag-filter-button--included"
-                                    type="button"
-                                    onClick={clearTagInclusion}
-                                    title={`Show all movies instead of only ${includedTag.name}`}
-                                >
-                                    {includedTag.name}
-                                    <span aria-hidden="true">×</span>
-                                </button>
-                            </div>
-                        )}
-
-                        {excludedTags.length > 0 && (
-                            <div className="excluded-tag-filters">
-                                <span className="tag-filter-label">Excluded</span>
-                                <div className="tag-filter-list">
-                                    {excludedTags.map((tag) => (
-                                        <button
-                                            key={tag.id}
-                                            className="tag-filter-button tag-filter-button--excluded"
-                                            type="button"
-                                            onClick={() => removeTagExclusion(tag.id)}
-                                            title={`Include ${tag.name} again`}
-                                        >
-                                            {tag.name}
-                                            <span aria-hidden="true">×</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {availableTags.length > 0 ? (
-                            <div className="tag-filter-list tag-filter-list--available">
-                                {availableTags.map((tag) => (
-                                    <button
-                                        key={tag.id}
-                                        className="tag-filter-button"
-                                        type="button"
-                                        onClick={(event) =>
-                                            event.shiftKey ? includeOnlyTag(tag.id) : excludeTag(tag.id)
-                                        }
-                                        title={`Exclude ${tag.name}; Shift+click to show only ${tag.name}`}
-                                    >
-                                        {tag.name}
-                                    </button>
-                                ))}
-                            </div>
-                        ) : excludedTags.length === 0 && includedTag === null ? (
-                            <span className="muted tag-filter-empty">No tags in the current library.</span>
-                        ) : null}
-                    </div>
-                )}
-
-                {!loading && movies.length > 0 && (
-                    <div className="actor-filter-panel" aria-label="Actor filters">
-            <span className="muted actor-filter-hint">
-              Actors · select one or more to require all selected actors
-            </span>
-
-                        {selectedActors.length > 0 && (
-                            <div className="selected-actor-filters">
-                                <span className="actor-filter-label">Selected</span>
-                                <div className="actor-filter-list">
-                                    {selectedActors.map((actor) => (
-                                        <button
-                                            key={actor.id}
-                                            className="actor-filter-button actor-filter-button--selected"
-                                            type="button"
-                                            onClick={() => removeActorFilter(actor.id)}
-                                            title={`Remove ${actor.name} from actor filter`}
-                                        >
-                                            {actor.name}
-                                            <span aria-hidden="true">×</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {availableActors.length > 0 ? (
-                            <div className="actor-filter-list actor-filter-list--available">
-                                {availableActors.map((actor) => (
-                                    <button
-                                        key={actor.id}
-                                        className="actor-filter-button"
-                                        type="button"
-                                        onClick={() => selectActor(actor.id)}
-                                        title={`Show movies containing ${actor.name}`}
-                                    >
-                                        {actor.name}
-                                    </button>
-                                ))}
-                            </div>
-                        ) : selectedActors.length === 0 ? (
-                            <span className="muted actor-filter-empty">No actors in the current library view.</span>
-                        ) : null}
-                    </div>
-                )}
+                <LibraryStatus />
+                <Row>
+                    <TagFilter/>
+                    <ActorFilter/>
+                </Row>
+                <FilepathFilter/>
 
                 {loading ? (
                     <p className="muted">Loading…</p>
@@ -337,7 +210,6 @@ export default function App(): React.JSX.Element {
                     <div>
                         <MovieTable>
                                 <TableHeader>
-                                    <TableColumn name={'Filepath'} />
                                     <TableColumn name={'Title'} />
                                     <TableColumn name={'Actors'} />
                                     <TableColumn name={'Tags'} />
@@ -357,7 +229,6 @@ export default function App(): React.JSX.Element {
                                             if (movie.available) void play(movie.id)
                                         }}
                                     >
-                                        <td>{movie.filepath}</td>
                                         <td>{movie.title}</td>
                                         <td>
                                             {movie.actors.length > 0 ? (
@@ -391,6 +262,7 @@ export default function App(): React.JSX.Element {
                                                 label={`Delete ${movie.title}`}
                                                 variant="danger"
                                                 onClick={() => void remove(movie.id)}
+                                                disabled={true}
                                             >
                                                 <TrashIcon/>
                                             </IconButton>
@@ -456,7 +328,6 @@ export default function App(): React.JSX.Element {
             </Panel>
 
             <Panel>
-                {/*<h2>Add movies</h2>*/}
                 <div
                     className={`drop-zone${dragging ? ' drop-zone-active' : ''}`}
                     onDragEnter={(event) => {
