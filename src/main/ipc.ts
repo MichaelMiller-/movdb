@@ -146,9 +146,7 @@ export function registerIpcHandlers(dataSource: DataSource): void {
     return toPickedMovieFile(result.filePaths[0])
   })
 
-  ipcMain.handle(
-    IPC_CHANNELS.moviesImportFiles,
-    async (_event, input: unknown): Promise<MovieImportResult> => {
+  ipcMain.handle(IPC_CHANNELS.moviesImportFiles, async (_event, input: unknown): Promise<MovieImportResult> => {
       if (!Array.isArray(input)) {
         throw new Error('Invalid dropped file list.')
       }
@@ -163,6 +161,8 @@ export function registerIpcHandlers(dataSource: DataSource): void {
       }
 
       await collectDroppedMovieFiles(droppedPaths, result);
+
+      console.log(result.skipped)
       return result
     }
   )
@@ -202,7 +202,7 @@ export function registerIpcHandlers(dataSource: DataSource): void {
 
         if (entry.isFile() && isVideoFile(entry.name)) {
           movieFiles.add(entryPath)
-          const picked = toPickedMovieFile(entry.name)
+          const picked = toPickedMovieFile(entryPath)
           const movie = await movies.create({
             title: picked.suggestedTitle,
             filepath: picked.filepath

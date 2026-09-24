@@ -6,6 +6,7 @@ import { Actor } from '../entities/Actor'
 import { Movie } from '../entities/Movie'
 import { Publisher } from '../entities/Publisher'
 import { Tag } from '../entities/Tag'
+import { isAbsoluteMovieFilePath, normalizeMovieFilePath } from '../movieFilePath'
 
 export class MovieRepository {
   private readonly movies: Repository<Movie>
@@ -31,10 +32,9 @@ export class MovieRepository {
 
   async create(input: MovieCreateInput): Promise<MovieSummary> {
     const title = input.title.trim()
-    const filepath = input.filepath.trim()
+    const filepath = normalizeMovieFilePath(input.filepath)
 
     if (!title) throw new Error('Movie title must not be empty.')
-    if (!filepath) throw new Error('Movie file path must not be empty.')
 
     const existing = await this.movies.findOneBy({ filepath })
     if (existing) throw new Error('This movie file is already in the library.')
@@ -137,6 +137,8 @@ async function toMovieSummary(movie: Movie): Promise<MovieSummary> {
 }
 
 async function isRegularFile(filepath: string): Promise<boolean> {
+  if (!isAbsoluteMovieFilePath(filepath)) return false
+
   try {
     return (await stat(filepath)).isFile()
   } catch {

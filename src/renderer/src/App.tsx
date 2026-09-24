@@ -337,7 +337,7 @@ export default function App(): React.JSX.Element {
                     <div>
                         <MovieTable>
                                 <TableHeader>
-                                    <TableColumn name={'Filename'} />
+                                    <TableColumn name={'Filepath'} />
                                     <TableColumn name={'Title'} />
                                     <TableColumn name={'Actors'} />
                                     <TableColumn name={'Tags'} />
@@ -357,7 +357,7 @@ export default function App(): React.JSX.Element {
                                             if (movie.available) void play(movie.id)
                                         }}
                                     >
-                                        <td>{movie.filename}</td>
+                                        <td>{movie.filepath}</td>
                                         <td>{movie.title}</td>
                                         <td>
                                             {movie.actors.length > 0 ? (
