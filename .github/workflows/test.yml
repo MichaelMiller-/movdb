@@ -52,3 +52,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y xvfb
+
+      - name: Run playwright tests
+        run: xvfb-run npm run test:e2e
+
