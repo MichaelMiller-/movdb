@@ -174,7 +174,7 @@ export function registerIpcHandlers(dataSource: DataSource): void {
         const movieFiles = new Set<string>()
 
         for (const filepath of droppedPaths) {
-            await collectDroppedPath(filepath, movieFiles, result, true)
+            await collectDroppedPath(filepath, movieFiles, result)
         }
 
         return [...movieFiles]
@@ -195,7 +195,7 @@ export function registerIpcHandlers(dataSource: DataSource): void {
                 const entryPath = join(filepath, entry.name)
 
                 if (entry.isDirectory()) {
-                    await collectDroppedPath(entryPath, movieFiles, result, false)
+                    await collectDroppedPath(entryPath, movieFiles, result)
                     continue
                 }
 
