@@ -1,4 +1,5 @@
-name: publish.docs.yml
+name: Build and Deploy 'docs' to gh-pages branch
+
 on:
   push:
     branches: [ "main" ]
