@@ -1,0 +1,61 @@
+# To view the documentation locally on your machine, use the following steps
+#
+#   python -m venv .venv
+#   source .venv/bin/activate
+#   pip install mkdocs-material
+#   mkdocs new .
+#   mkdocs serve 
+#
+site_name: "movdb"
+use_directory_urls: true
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.instant
+    - navigation.instant.preview
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotate
+    - content.code.annotation
+    - content.code.copy
+    - content.footnote.tooltips
+  language: en
+  palette:
+    - scheme: default
+      primary: teal
+      accent: purple
+
+nav:
+  - 'About': about.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - admonition
+  - pymdownx.arithmatex:
+      generic: true
+  - footnotes
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.mark
+  - attr_list
+  - md_in_html
+  - pymdownx.blocks.caption
+
+plugins:
+  - search
+#  - glightbox
+
+copyright: |
+  &copy <a href="https://github.com/MichaelMiller-" target="_blank" rel="noopener">Michael Miller</a> &bull; <a href="https://github.com/MichaelMiller-/movdb/blob/main/LICENSE"> License</a>
