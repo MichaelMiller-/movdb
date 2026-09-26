@@ -3,7 +3,7 @@
 
 # movdb
 
-A movie library manager.
+A [https://michaelmiller-.github.io/movdb/](movie library manager).
 
 ## Run
 
@@ -45,3 +45,4 @@ The renderer never gets access to Node, TypeORM, SQLite, or `ipcRenderer` direct
 ```bash
 --db <filename>
 ```
+
