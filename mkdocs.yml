@@ -31,6 +31,8 @@ theme:
       accent: purple
 
 nav:
+  - 'Architecture': architecture.md
+  - 'Usage': usage.md
   - 'About': about.md
 
 markdown_extensions:
