@@ -3,7 +3,7 @@
 
 # movdb
 
-A [https://michaelmiller-.github.io/movdb/](movie library manager).
+A [movie library manager](https://michaelmiller-.github.io/movdb/).
 
 ## Run
 
